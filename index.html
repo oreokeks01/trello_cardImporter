@@ -1,33 +1,75 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Trello Study Cards</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #f4f6fb;
+      color: #172b4d;
+      font-family: system-ui, sans-serif;
+    }
+    .card {
+      background: white;
+      padding: 48px;
+      border-radius: 18px;
+      box-shadow: 0 12px 40px #172b4d18;
+      max-width: 480px;
+      text-align: center;
+    }
+    h1 { margin-bottom: 12px; }
+    p { line-height: 1.6; color: #52627a; }
+    .button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      background: #0c66e4;
+      color: white;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .button:hover { background: #0055cc; }
+  </style>
 </head>
 <body>
-<script src="https://p.trellocdn.com/power-up.min.js"></script>
-<script>
-const ICON = "https://p.trellocdn.com/power-up-logo.png";
+  <main class="card">
+    <h1>🧠 Trello Study Cards</h1>
+    <p>
+      Importiere Lernkarten direkt in dein
+      Trello-Board. Verwalte Lernaufgaben,
+      Schwierigkeitsgrade und Themen.
+    </p>
+    <a class="button" href="./importer.html">
+      Lernkarten-Importer öffnen
+    </a>
+  </main>
 
-function openImporter(t) {
-  return t.modal({
-    title: "🧠 Lernkarten Bulk-Import",
-    url: "./importer.html",
-    fullscreen: true,
-    args: { board: t.getContext() }
-  });
-}
-
-window.TrelloPowerUp.initialize({
-  "board-buttons": function(t) {
-    return [{
-      icon: { dark: ICON, light: ICON },
-      text: "Lernkarten importieren",
-      condition: "edit",
-      callback: openImporter
-    }];
-  }
-});
-</script>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script>
+    if (window.TrelloPowerUp) {
+      window.TrelloPowerUp.initialize({
+        "board-buttons": function(t) {
+          return [{
+            text: "Lernkarten importieren",
+            condition: "edit",
+            callback: function(t) {
+              return t.modal({
+                title: "Lernkarten importieren",
+                url: "./importer.html",
+                fullscreen: true
+              });
+            }
+          }];
+        }
+      });
+    }
+  </script>
 </body>
 </html>
