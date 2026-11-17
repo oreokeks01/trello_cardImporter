@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lernkarten Import</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;margin:0;background:#f4f5f7;color:#172b4d}
+main{max-width:1100px;margin:auto;padding:24px}
+textarea{width:100%;min-height:220px;box-sizing:border-box;padding:12px;border:1px solid #dfe1e6;border-radius:8px;font-family:monospace}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin:12px 0}
+button,select{padding:10px 14px;border:0;border-radius:6px;cursor:pointer}
+button.primary{background:#0c66e4;color:#fff}
+button.secondary{background:#dfe1e6}
+table{width:100%;border-collapse:collapse;background:#fff;margin-top:16px}
+th,td{border-bottom:1px solid #eee;text-align:left;padding:9px;vertical-align:top}
+#status{margin-top:14px;padding:12px;background:#fff;border-radius:8px}
+.small{color:#5e6c84;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<h1>🧠 Lernkarten Bulk-Import</h1>
+<p class="small">CSV-Format: front,back,fach,schwierigkeit</p>
+
+<textarea id="input" placeholder="front,back,fach,schwierigkeit
+Was ist ATP?,Energieträger der Zelle,Biologie,leicht
+Was ist Osmose?,Diffusion von Wasser durch eine semipermeable Membran,Biologie,mittel"></textarea>
+
+<div class="row">
+  <label>Zielliste:
+    <select id="list"><option>Aktuelle Liste wird geladen…</option></select>
+  </label>
+  <label><input type="checkbox" id="skipDuplicates" checked> Duplikate überspringen</label>
+</div>
+
+<div class="row">
+  <button class="secondary" id="preview">Vorschau</button>
+  <button class="primary" id="import">🚀 Importieren</button>
+</div>
+
+<div id="status">Noch keine Daten geladen.</div>
+<table id="previewTable" hidden>
+<thead><tr><th>#</th><th>Vorderseite</th><th>Rückseite</th><th>Fach</th><th>Level</th></tr></thead>
+<tbody></tbody>
+</table>
+</main>
+
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script>
+const t = TrelloPowerUp.iframe();
+let parsed = [];
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/).filter(Boolean);
+  if (!lines.length) return [];
+  const header = lines.shift().split(",").map(x=>x.trim().toLowerCase());
+  return lines.map(line => {
+    // Demo parser: simple CSV. Für Produktivbetrieb papaparse o.ä. verwenden.
+    const cells = line.split(",").map(x=>x.trim());
+    const o = {};
+    header.forEach((h,i)=>o[h]=cells[i] || "");
+    return o;
+  }).filter(x=>x.front && x.back);
+}
+
+async function api() {
+  return await t.getRestApi();
+}
+
+async function loadLists() {
+  try {
+    const c = await api();
+    const ctx = t.getContext();
+    const lists = await c.get("/boards/" + ctx.board + "/lists", { fields:"id,name" });
+    const select = document.getElementById("list");
+    select.innerHTML = "";
+    lists.forEach(l => {
+      const o = document.createElement("option");
+      o.value = l.id; o.textContent = l.name;
+      select.appendChild(o);
+    });
+    document.getElementById("status").textContent = lists.length
+      ? "Zielliste auswählen und Vorschau öffnen."
+      : "Keine Listen gefunden.";
+  } catch(e) {
+    document.getElementById("status").textContent =
+      "Trello-Zugriff fehlt oder ist nicht autorisiert. Öffne das Power-Up erneut und autorisiere es.";
+  }
+}
+
+function renderPreview() {
+  parsed = parseCSV(document.getElementById("input").value);
+  const tbody = document.querySelector("#previewTable tbody");
+  tbody.innerHTML = "";
+  parsed.forEach((x,i)=>{
+    const tr=document.createElement("tr");
+    [i+1,x.front,x.back,x.fach||"",x.schwierigkeit||""].forEach(v=>{
+      const td=document.createElement("td"); td.textContent=v; tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  document.getElementById("previewTable").hidden = !parsed.length;
+  document.getElementById("status").textContent =
+    parsed.length + " Lernkarten erkannt.";
+}
+
+async function importCards() {
+  if (!parsed.length) renderPreview();
+  if (!parsed.length) return;
+
+  const listId = document.getElementById("list").value;
+  const c = await api();
+  const status = document.getElementById("status");
+  let created=0, skipped=0, failed=0;
+
+  // Für ein echtes Produkt: zuerst bestehende Karten laden und Namen normalisieren.
+  let existing = [];
+  if (document.getElementById("skipDuplicates").checked) {
+    try {
+      existing = await c.get("/lists/" + listId + "/cards", { fields:"name" });
+    } catch(e) {}
+  }
+  const names = new Set(existing.map(x => x.name.trim().toLowerCase()));
+
+  for (const card of parsed) {
+    const name = card.front.trim();
+    if (names.has(name.toLowerCase())) { skipped++; continue; }
+
+    const desc = [
+      "## Antwort",
+      card.back,
+      "",
+      "Fach: " + (card.fach || "—"),
+      "Schwierigkeit: " + (card.schwierigkeit || "—"),
+      "",
+      "🧠 Lernkarte"
+    ].join("\n");
+
+    try {
+      await c.post("/cards", { idList:listId, name, desc });
+      names.add(name.toLowerCase());
+      created++;
+      status.textContent = `Import läuft… ${created + skipped}/${parsed.length}`;
+    } catch(e) {
+      failed++;
+    }
+  }
+
+  status.textContent =
+    `Fertig: ${created} erstellt · ${skipped} Duplikate übersprungen · ${failed} Fehler`;
+}
+
+document.getElementById("preview").onclick=renderPreview;
+document.getElementById("import").onclick=importCards;
+
+t.render(() => {
+  t.sizeTo({height: 760});
+  loadLists();
+});
+</script>
+</body>
+</html>

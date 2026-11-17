@@ -1,0 +1,8 @@
+{
+  "name": "Trello Study Cards",
+  "description": "Bulk-Import von Lernkarten in Trello",
+  "connectorUrl": "https://DEINE-DOMAIN.example/index.html",
+  "capabilities": [
+    "board-buttons"
+  ]
+}

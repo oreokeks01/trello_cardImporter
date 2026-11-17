@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Trello Study Cards</title>
+</head>
+<body>
+<script src="https://p.trellocdn.com/power-up.min.js"></script>
+<script>
+const ICON = "https://p.trellocdn.com/power-up-logo.png";
+
+function openImporter(t) {
+  return t.modal({
+    title: "🧠 Lernkarten Bulk-Import",
+    url: "./importer.html",
+    fullscreen: true,
+    args: { board: t.getContext() }
+  });
+}
+
+window.TrelloPowerUp.initialize({
+  "board-buttons": function(t) {
+    return [{
+      icon: { dark: ICON, light: ICON },
+      text: "Lernkarten importieren",
+      condition: "edit",
+      callback: openImporter
+    }];
+  }
+});
+</script>
+</body>
+</html>
