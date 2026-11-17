@@ -1,75 +1,11 @@
-
-<!DOCTYPE html>
-<html lang="de">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Trello Study Cards</title>
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      background: #f4f6fb;
-      color: #172b4d;
-      font-family: system-ui, sans-serif;
-    }
-    .card {
-      background: white;
-      padding: 48px;
-      border-radius: 18px;
-      box-shadow: 0 12px 40px #172b4d18;
-      max-width: 480px;
-      text-align: center;
-    }
-    h1 { margin-bottom: 12px; }
-    p { line-height: 1.6; color: #52627a; }
-    .button {
-      display: inline-block;
-      margin-top: 20px;
-      padding: 14px 24px;
-      border-radius: 10px;
-      background: #0c66e4;
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .button:hover { background: #0055cc; }
-  </style>
-</head>
-<body>
-  <main class="card">
-    <h1>🧠 Trello Study Cards</h1>
-    <p>
-      Importiere Lernkarten direkt in dein
-      Trello-Board. Verwalte Lernaufgaben,
-      Schwierigkeitsgrade und Themen.
-    </p>
-    <a class="button" href="./importer.html">
-      Lernkarten-Importer öffnen
-    </a>
-  </main>
-
-  <script src="https://p.trellocdn.com/power-up.min.js"></script>
-  <script>
-    if (window.TrelloPowerUp) {
-      window.TrelloPowerUp.initialize({
-        "board-buttons": function(t) {
-          return [{
-            text: "Lernkarten importieren",
-            condition: "edit",
-            callback: function(t) {
-              return t.modal({
-                title: "Lernkarten importieren",
-                url: "./importer.html",
-                fullscreen: true
-              });
-            }
-          }];
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Trello Bulk Importer V3</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="landing"><div class="brand">🧠 STUDY CARDS · V3</div><h1>Trello Bulk Importer</h1><p>CSV-Datei hochladen, Lernkarten prüfen und direkt in dein Trello-Board importieren.</p><a class="primary linkbutton" href="./importer.html">CSV-Importer öffnen</a><p class="muted">Der CSV-Upload funktioniert auch als Vorschau im Browser. Für den Import öffne das Power-Up in Trello.</p></main>
+<script src="./config.js"></script><script src="https://p.trellocdn.com/power-up.min.js"></script><script>
+if(window.TrelloPowerUp){
+  const cfg=window.STUDY_CARDS_CONFIG;
+  window.TrelloPowerUp.initialize({
+    'board-buttons': function(t){return [{text:'🧠 CSV importieren',condition:'edit',callback:function(t){return t.modal({title:'Trello Bulk Importer',url:'./importer.html',fullscreen:true});}}];}
+  },{appKey:cfg.appKey,appName:cfg.appName});
+}
+</script></body></html>
